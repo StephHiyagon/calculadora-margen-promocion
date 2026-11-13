@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Calcula cuántas unidades vender a precio normal para alcanzar un margen bruto objetivo después de una promoción.">
+<title>Calculadora de margen de promoción</title>
+<style>
+  :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; color: #172e28; background: #f4f6f1; --muted: #4b6259; --green: #155a43; --line: #dae4db; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main { width: min(100% - 36px, 1100px); margin: 0 auto; padding: clamp(28px, 6vw, 70px) 0 36px; }
+  header { margin-bottom: 28px; }
+  h1 { font-size: clamp(30px, 5vw, 51px); letter-spacing: -.055em; line-height: 1.08; max-width: 760px; margin: 0 0 12px; }
+  h2 { font-size: 20px; letter-spacing: -.025em; margin: 0; }
+  p { line-height: 1.55; margin: 0; }
+  header p, .note, summary { color: var(--muted); }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 19px; overflow: hidden; }
+  form, .detail { padding: clamp(16px, 2.5vw, 25px); }
+  fieldset { margin: 19px 0 0; border: 0; border-top: 1px solid var(--line); padding: 12px 0 0; min-width: 0; }
+  legend { font-weight: 650; padding: 0 10px 0 0; font-size: 14px; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 12px; }
+  label { display: block; min-width: 0; font-size: 13px; font-weight: 620; line-height: 1.4; }
+  .input { margin-top: 5px; display: flex; align-items: center; background: #f6f9f6; border: 1px solid #c5d5ca; border-radius: 9px; padding-right: 9px; }
+  .input:focus-within { outline: 2px solid var(--green); outline-offset: 2px; }
+  input { color: inherit; background: transparent; border: 0; outline: none; width: 100%; min-width: 0; font: 600 16px system-ui, sans-serif; padding: 9px 8px; }
+  input[aria-invalid="true"] { color: #a32d23; }
+  .unit { color: var(--muted); font-size: 12px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+  button { font: 650 14px system-ui, sans-serif; border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; background: #fff; color: var(--green); cursor: pointer; }
+  button:hover { background: #edf5ef; }
+  button:focus-visible, summary:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+  .result { background: #153d30; color: #fff; padding: clamp(17px, 3vw, 27px); min-height: 205px; }
+  .result h2 { color: #d6ecdf; font-size: 15px; letter-spacing: 0; }
+  .quantity { font-size: clamp(43px, 7vw, 67px); letter-spacing: -.055em; font-weight: 750; line-height: 1.05; margin: 8px 0; overflow-wrap: anywhere; }
+  .quantity.message { font-size: clamp(25px, 4vw, 38px); letter-spacing: -.035em; }
+  .status { color: #d6ecdf; font-size: 14px; }
+  .margin { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 5px 10px; border-top: 1px solid #537263; margin-top: 16px; padding-top: 13px; font-size: 14px; }
+  .margin strong { font-size: 23px; }
+  .detail h2 { margin-bottom: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 3px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child { text-align: left; }
+  thead { color: var(--muted); }
+  td:last-child { font-weight: 680; }
+  details { border-top: 1px solid var(--line); padding-top: 13px; margin-top: 18px; }
+  summary { cursor: pointer; font-size: 14px; font-weight: 650; }
+  details p, .note { font-size: 13px; margin-top: 9px; }
+  @media (max-width: 770px) { .layout { grid-template-columns: 1fr; } }
+  @media (max-width: 390px) { main { width: calc(100% - 22px); } table { font-size: 11px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Calculadora de margen de promoción</h1>
+    <p>Estima cuántas unidades vender a precio normal para alcanzar tu margen bruto objetivo.</p>
+  </header>
+  <div class="layout">
+    <form class="card" id="calculator" aria-labelledby="input-heading" novalidate>
+      <h2 id="input-heading">Datos de venta</h2>
+      <fieldset>
+        <legend>Promoción</legend>
+        <div class="fields">
+          <label>Unidades facturadas<span class="input"><input name="quantity" inputmode="numeric" value="300" required></span></label>
+          <label>Precio neto unitario (Bs)<span class="input"><input name="promoPrice" inputmode="decimal" value="100" required><span class="unit" aria-hidden="true">Bs</span></span></label>
+          <label>Margen bruto (%)<span class="input"><input name="promoMargin" inputmode="decimal" value="20" required><span class="unit" aria-hidden="true">%</span></span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Venta normal</legend>
+        <div class="fields">
+          <label>Precio neto unitario (Bs)<span class="input"><input name="normalPrice" inputmode="decimal" value="110" required><span class="unit" aria-hidden="true">Bs</span></span></label>
+          <label>Margen bruto (%)<span class="input"><input name="normalMargin" inputmode="decimal" value="35" required><span class="unit" aria-hidden="true">%</span></span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Objetivo</legend>
+        <div class="fields">
+          <label>Margen bruto objetivo (%)<span class="input"><input name="target" inputmode="decimal" value="30" required><span class="unit" aria-hidden="true">%</span></span></label>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <button type="button" id="example">Cargar ejemplo</button>
+        <button type="button" id="clear">Limpiar</button>
+      </div>
+      <p class="note">Usa precios netos sin IVA. En un 3+1, ingresa las unidades facturadas e incluye el costo de las unidades bonificadas en el margen de promoción.</p>
+    </form>
+    <section class="card" aria-labelledby="result-heading">
+      <div class="result" role="status" aria-live="polite" aria-atomic="true">
+        <h2 id="result-heading">Unidades mínimas de venta normal</h2>
+        <p class="quantity" id="result">—</p>
+        <p class="status" id="status"></p>
+        <div class="margin"><span>Margen final estimado</span><strong id="final-margin">—</strong></div>
+      </div>
+      <div class="detail">
+        <h2 id="detail-heading">Detalle de ventas</h2>
+        <table aria-labelledby="detail-heading">
+          <thead><tr><th scope="col">Concepto</th><th scope="col">Promoción</th><th scope="col">Normal</th><th scope="col">Total</th></tr></thead>
+          <tbody>
+            <tr data-row="units"><th scope="row">Unidades</th><td>—</td><td>—</td><td>—</td></tr>
+            <tr data-row="sales"><th scope="row">Venta neta (Bs)</th><td>—</td><td>—</td><td>—</td></tr>
+            <tr data-row="profit"><th scope="row">Utilidad bruta (Bs)</th><td>—</td><td>—</td><td>—</td></tr>
+            <tr data-row="margin"><th scope="row">Margen bruto</th><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+        <details><summary>Cómo se calcula</summary><p>El margen combinado es la utilidad bruta total dividida entre la venta neta total. Cada unidad a precio normal aporta su precio neto multiplicado por la diferencia entre su margen y el objetivo. La app calcula cuántas unidades hacen falta para cubrir la brecha de la promoción y redondea hacia arriba.</p></details>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+  const scale = 1000000n;
+  const percentScale = 100n * scale;
+  const form = document.querySelector("#calculator");
+  const fields = Array.from(form.querySelectorAll("input"));
+  const output = document.querySelector("#result");
+  const status = document.querySelector("#status");
+  const finalMargin = document.querySelector("#final-margin");
+  const unitsFormat = new Intl.NumberFormat("es-BO");
+  const currencyFormat = new Intl.NumberFormat("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const marginFormat = new Intl.NumberFormat("es-BO", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  const rowCells = Object.fromEntries(Array.from(document.querySelectorAll("[data-row]"), row => [row.dataset.row, Array.from(row.querySelectorAll("td"))]));
+  const formatMargin = (profit, sales) => sales === 0n ? "—" : marginFormat.format(Number(profit) / Number(sales * percentScale));
+
+  function read(input) {
+    const raw = input.value.trim().replace(",", ".");
+    if (!raw) return { empty: true };
+    if (input.name === "quantity") {
+      return /^\d{1,15}$/.test(raw) ? { value: BigInt(raw) } : { invalid: true };
+    }
+    if (!/^-?(?:\d{1,15}(?:\.\d{0,6})?|\.\d{1,6})$/.test(raw)) return { invalid: true };
+    const [whole, fraction = ""] = raw.replace(/^-/, "").split(".");
+    const magnitude = BigInt(whole || "0") * scale + BigInt(fraction.padEnd(6, "0"));
+    const value = raw.startsWith("-") ? -magnitude : magnitude;
+    const invalid = input.name.endsWith("Price") ? value <= 0n : value > percentScale;
+    return invalid ? { invalid: true } : { value };
+  }
+
+  function calculate({ quantity, promoPrice, promoMargin, normalPrice, normalMargin, target }) {
+    const promoSales = quantity * promoPrice;
+    const deficit = promoSales * (target - promoMargin);
+    const contribution = normalPrice * (normalMargin - target);
+    if (quantity > 0n && deficit <= 0n) return { units: 0n, message: "La promoción ya alcanza el margen objetivo." };
+    if (contribution < 0n || (deficit > 0n && contribution === 0n)) {
+      return { message: normalMargin === target
+        ? "El margen normal iguala la meta y el margen de la promoción está por debajo."
+        : "El margen de venta normal queda por debajo de la meta." };
+    }
+    if (quantity === 0n) return { units: 1n, message: "Con una unidad a precio normal ya alcanzas la meta." };
+    return { units: (deficit + contribution - 1n) / contribution, message: "Cantidad redondeada hacia arriba a unidades enteras." };
+  }
+
+  function display(result, message, rows = {}) {
+    output.textContent = result;
+    output.classList.toggle("message", result === "Meta inalcanzable");
+    status.textContent = message;
+    finalMargin.textContent = rows.margin?.[2] ?? "—";
+    for (const [key, cells] of Object.entries(rowCells)) {
+      cells.forEach((cell, index) => { cell.textContent = rows[key]?.[index] ?? "—"; });
+    }
+  }
+
+  function update() {
+    const inputs = fields.map(input => {
+      const field = read(input);
+      input.setAttribute("aria-invalid", String(Boolean(field.invalid)));
+      return [input.name, field];
+    });
+    if (inputs.some(([, field]) => field.invalid)) {
+      display("—", "Revisa los campos marcados. Usa unidades enteras, precios positivos y márgenes de hasta 100%. Puedes usar coma o punto decimal.");
+      return;
+    }
+    if (inputs.some(([, field]) => field.empty)) {
+      display("—", "Completa los seis campos para calcular el resultado.");
+      return;
+    }
+    const data = Object.fromEntries(inputs.map(([name, field]) => [name, field.value]));
+    const { units, message } = calculate(data);
+    if (units === undefined) {
+      display("Meta inalcanzable", message);
+      return;
+    }
+    const promoSales = data.quantity * data.promoPrice;
+    const normalSales = units * data.normalPrice;
+    const sales = [promoSales, normalSales, promoSales + normalSales];
+    const promoProfit = promoSales * data.promoMargin;
+    const normalProfit = normalSales * data.normalMargin;
+    const profits = [promoProfit, normalProfit, promoProfit + normalProfit];
+    display(unitsFormat.format(units), message, {
+      units: [data.quantity, units, data.quantity + units].map(n => unitsFormat.format(n)),
+      sales: sales.map(n => currencyFormat.format(Number(n) / Number(scale))),
+      profit: profits.map(n => currencyFormat.format(Number(n) / Number(scale * percentScale))),
+      margin: profits.map((n, index) => formatMargin(n, sales[index])),
+    });
+  }
+
+  form.addEventListener("submit", event => event.preventDefault());
+  form.addEventListener("input", update);
+  document.querySelector("#example").addEventListener("click", () => { form.reset(); update(); });
+  document.querySelector("#clear").addEventListener("click", () => {
+    fields.forEach(field => { field.value = ""; });
+    update();
+    fields[0].focus();
+  });
+  update();
+</script>
+</body>
+</html>
